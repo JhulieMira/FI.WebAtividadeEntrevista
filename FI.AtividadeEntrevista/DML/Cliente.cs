@@ -57,6 +57,10 @@ namespace FI.AtividadeEntrevista.DML
         public string Sobrenome { get; set; }
 
         /// <summary>
+        /// CPF
+        /// </summary>
+        public string CPF { get; set; }
+        /// <summary>
         /// Telefone
         /// </summary>
         public string Telefone { get; set; }        

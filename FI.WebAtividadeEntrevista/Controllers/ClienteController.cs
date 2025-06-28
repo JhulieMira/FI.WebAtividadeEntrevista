@@ -49,6 +49,7 @@ namespace WebAtividadeEntrevista.Controllers
                     Nacionalidade = model.Nacionalidade,
                     Nome = model.Nome,
                     Sobrenome = model.Sobrenome,
+                    CPF = model.CPF,
                     Telefone = model.Telefone
                 });
 
