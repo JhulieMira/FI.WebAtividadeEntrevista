@@ -27,7 +27,7 @@ namespace WebAtividadeEntrevista.Controllers
         {
             BoCliente bo = new BoCliente();
             
-            if (!this.ModelState.IsValid && bo.VerificarExistencia(model.CPF))
+            if (!this.ModelState.IsValid)
             {
                 List<string> erros = (from item in ModelState.Values
                                       from error in item.Errors
@@ -35,6 +35,10 @@ namespace WebAtividadeEntrevista.Controllers
 
                 Response.StatusCode = 400;
                 return Json(string.Join(Environment.NewLine, erros));
+            }
+            if (bo.VerificarExistencia(model.CPF))
+            {
+                return Json(string.Join(Environment.NewLine, "Já existe um usuário cadastrado com esse CPF."));
             }
             else
             {
@@ -112,7 +116,8 @@ namespace WebAtividadeEntrevista.Controllers
                     Nacionalidade = cliente.Nacionalidade,
                     Nome = cliente.Nome,
                     Sobrenome = cliente.Sobrenome,
-                    Telefone = cliente.Telefone
+                    Telefone = cliente.Telefone,
+                    CPF = cliente.CPF
                 };
 
             
