@@ -1,0 +1,53 @@
+﻿@model dynamic
+
+<form id="formCadastroBeneficiario" method="post">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label for="CPF">CPF:</label>
+                <input required="required" type="text" class="form-control" id="CPF" name="CPF" placeholder="000.000.000-00" maxlength="14">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label for="Nome">Nome:</label>
+                <input required="required" type="text" class="form-control" id="Nome" name="Nome" placeholder="Ex.: Aurora" maxlength="50">
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-group">
+                <label class="invisible">Ação</label> 
+                <button class="btn btn-sm btn-success btn-block">Incluir</button>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th style="width: 25%;">CPF</th>
+            <th style="width: 45%;">Nome</th>
+            <th style="width: 30%;">Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>461.444.788-09</td>
+            <td>Jhulie</td>
+            <td>
+                <button class="btn btn-primary btn-sm" style="margin-right: 5px;">Alterar</button>
+                <button class="btn btn-primary btn-sm">Excluir</button>
+            </td>
+        </tr>
+        <tr>
+            <td>461.444.788-09</td>
+            <td>Jhulie</td>
+            <td>
+                <button class="btn btn-primary btn-sm" style="margin-right: 5px;">Alterar</button>
+                <button class="btn btn-primary btn-sm">Excluir</button>
+            </td>
+        </tr>
+    </tbody>
+</table>

@@ -19,8 +19,12 @@ namespace FI.WebAtividadeEntrevista.Controllers
 
             return Json(new { Result = "OK", Records = beneficiarios }, JsonRequestBehavior.AllowGet);
         }
+        public ActionResult CarregarConteudoBeneficiarios()
+        {
+            return PartialView("_ConteudoBeneficiarios");
+        }
 
-        [HttpPost]
+        [HttpPost]  
         public JsonResult Incluir(BeneficiarioModel model)
         {
             BoBeneficiario bo = new BoBeneficiario();
