@@ -85,6 +85,12 @@ namespace WebAtividadeEntrevista.Controllers
         public JsonResult Alterar(ClienteModel model)
         {
             BoCliente bo = new BoCliente();
+            var beneficiarios = new List<BeneficiarioModel>();
+
+            if (!string.IsNullOrEmpty(model.BeneficiariosJson))
+            {
+                beneficiarios = Newtonsoft.Json.JsonConvert.DeserializeObject<List<BeneficiarioModel>>(model.BeneficiariosJson);
+            }
        
             if (!this.ModelState.IsValid)
             {
@@ -110,6 +116,18 @@ namespace WebAtividadeEntrevista.Controllers
                     Sobrenome = model.Sobrenome,
                     Telefone = model.Telefone
                 });
+
+                foreach (var b in beneficiarios)
+                {
+                    BoBeneficiario boBeneficiario = new BoBeneficiario();
+                    b.ClienteId = model.Id;
+                    boBeneficiario.Incluir(new Beneficiario
+                    {
+                        CPF = b.CPF,
+                        Nome = b.Nome,
+                        IdCliente = b.ClienteId
+                    });
+                }
                                
                 return Json("Cadastro alterado com sucesso");
             }
