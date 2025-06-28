@@ -5,18 +5,18 @@
         <div class="col-md-4">
             <div class="form-group">
                 <label for="CPF">CPF:</label>
-                <input required="required" type="text" class="form-control" id="CPF" name="CPF" placeholder="000.000.000-00" maxlength="14">
+                <input required="required" type="text" class="form-control" id="BeneficiarioCPF" name="BeneficiarioCPF" placeholder="000.000.000-00" maxlength="14">
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
                 <label for="Nome">Nome:</label>
-                <input required="required" type="text" class="form-control" id="Nome" name="Nome" placeholder="Ex.: Aurora" maxlength="50">
+                <input required="required" type="text" class="form-control" id="BeneficiarioNome" name="BeneficiarioNome" placeholder="Ex.: Aurora" maxlength="50">
             </div>
         </div>
         <div class="col-md-2">
             <div class="form-group">
-                <label class="invisible">Ação</label> 
+                <label class="invisible">Ação</label>
                 <button class="btn btn-sm btn-success btn-block">Incluir</button>
             </div>
         </div>
@@ -33,21 +33,64 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>461.444.788-09</td>
-            <td>Jhulie</td>
-            <td>
-                <button class="btn btn-primary btn-sm" style="margin-right: 5px;">Alterar</button>
-                <button class="btn btn-primary btn-sm">Excluir</button>
-            </td>
-        </tr>
-        <tr>
-            <td>461.444.788-09</td>
-            <td>Jhulie</td>
-            <td>
-                <button class="btn btn-primary btn-sm" style="margin-right: 5px;">Alterar</button>
-                <button class="btn btn-primary btn-sm">Excluir</button>
-            </td>
-        </tr>
     </tbody>
 </table>
+
+<script>
+    if (typeof window.beneficiarios === 'undefined') {
+        window.beneficiarios = [];
+    }
+
+
+    $(document).on('submit', '#formCadastroBeneficiario', function (e) {
+        e.preventDefault();
+
+        const cpf = $(this).find('#BeneficiarioCPF').val().trim();
+        const nome = $(this).find('#BeneficiarioNome').val().trim();
+        const cpfCliente = window.parent ? window.parent.$('#CPF').val() : $('#CPF').val();
+
+        if (!nome || !cpf) {
+            alert("Preencha todos os campos.");
+            return;
+        }
+
+        if (cpfCliente && cpf.replace(/\D/g, '') === cpfCliente.replace(/\D/g, '')) {
+            alert("O CPF do beneficiário não pode ser igual ao CPF do cliente.");
+            return;
+        }
+
+        if (window.beneficiarios.some(b => b.CPF === cpf)) {
+            alert("Já existe um beneficiário com esse CPF.");
+            return;
+        }
+
+        window.adicionarBeneficiario(cpf, nome);
+        
+        window.renderizarTabelaBeneficiarios();
+
+        $('#BeneficiarioNome').val('');
+        $('#BeneficiarioCPF').val('');
+        $('#BeneficiarioNome').focus();
+    });
+
+    $(document).on('click', '.btn-excluir', function () {
+        const index = $(this).data('index');
+        window.beneficiarios.splice(index, 1);
+        window.renderizarTabelaBeneficiarios();
+    });
+
+    $(document).on('click', '.btn-editar', function () {
+        const index = $(this).data('index');
+        const b = window.beneficiarios[index];
+
+        $('#BeneficiarioCPF').val(b.CPF);
+        $('#BeneficiarioNome').val(b.Nome);
+
+        window.beneficiarios.splice(index, 1);
+        window.renderizarTabelaBeneficiarios();
+    });
+
+    if (window.beneficiarios.length > 0) {
+        window.renderizarTabelaBeneficiarios();
+    }
+</script>

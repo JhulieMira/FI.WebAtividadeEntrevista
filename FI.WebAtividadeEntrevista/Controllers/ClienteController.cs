@@ -6,6 +6,8 @@ using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using FI.AtividadeEntrevista.DML;
+using FI.WebAtividadeEntrevista.Models;
+
 
 namespace WebAtividadeEntrevista.Controllers
 {
@@ -23,10 +25,16 @@ namespace WebAtividadeEntrevista.Controllers
         }
 
         [HttpPost]
-        public JsonResult Incluir(ClienteModel model)
+        public JsonResult Incluir(ClienteModel model, FormCollection form)
         {
             BoCliente bo = new BoCliente();
-            
+            var beneficiarios = new List<BeneficiarioModel>();
+
+            if (!string.IsNullOrEmpty(model.BeneficiariosJson))
+            {
+                beneficiarios = Newtonsoft.Json.JsonConvert.DeserializeObject<List<BeneficiarioModel>>(model.BeneficiariosJson);
+            }
+
             if (!this.ModelState.IsValid)
             {
                 List<string> erros = (from item in ModelState.Values
@@ -36,6 +44,7 @@ namespace WebAtividadeEntrevista.Controllers
                 Response.StatusCode = 400;
                 return Json(string.Join(Environment.NewLine, erros));
             }
+            
             if (bo.VerificarExistencia(model.CPF))
             {
                 return Json(string.Join(Environment.NewLine, "Já existe um usuário cadastrado com esse CPF."));
@@ -57,8 +66,18 @@ namespace WebAtividadeEntrevista.Controllers
                     Telefone = model.Telefone
                 });
 
-           
-                return Json("Cadastro efetuado com sucesso");
+                foreach (var b in beneficiarios)
+                {
+                    BoBeneficiario boBeneficiario = new BoBeneficiario();
+                    b.ClienteId = model.Id;
+                    boBeneficiario.Incluir(new Beneficiario
+                    {
+                        CPF = b.CPF,
+                        Nome = b.Nome,
+                        IdCliente = b.ClienteId
+                    });
+                }
+               return Json("Cadastro efetuado com sucesso");
             }
         }
 
@@ -144,7 +163,6 @@ namespace WebAtividadeEntrevista.Controllers
 
                 List<Cliente> clientes = new BoCliente().Pesquisa(jtStartIndex, jtPageSize, campo, crescente.Equals("ASC", StringComparison.InvariantCultureIgnoreCase), out qtd);
 
-                //Return result to jTable
                 return Json(new { Result = "OK", Records = clientes, TotalRecordCount = qtd });
             }
             catch (Exception ex)

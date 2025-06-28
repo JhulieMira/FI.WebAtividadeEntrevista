@@ -97,6 +97,7 @@
 
     </div>
 
+    <input type="hidden" id="BeneficiariosJson" name="BeneficiariosJson" />
 
 </form>
 
@@ -125,9 +126,47 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 <script>
-    $('#beneficiariosModal').on('show.bs.modal', function () {
-    $('#conteudoBeneficiarios').load('@Url.Action("CarregarConteudoBeneficiarios", "Beneficiario")');
-});
+    if (typeof window.beneficiarios === 'undefined') {
+        window.beneficiarios = [];
+    }
 
+    window.adicionarBeneficiario = function(cpf, nome) {
+        window.beneficiarios.push({ CPF: cpf, Nome: nome });
+    };
+
+    window.renderizarTabelaBeneficiarios = function() {
+        const tbody = $('#beneficiariosModal .modal-body table tbody');
+        tbody.empty();
+
+
+        window.beneficiarios.forEach((b, index) => {
+            const row = `
+                <tr>
+                    <td>${b.CPF}</td>
+                    <td>${b.Nome}</td>
+                    <td>
+                        <button type="button" class="btn btn-primary btn-sm btn-editar" data-index="${index}">Alterar</button>
+                        <button type="button" class="btn btn-danger btn-sm btn-excluir" data-index="${index}">Excluir</button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    };
+
+
+    $('#beneficiariosModal').on('show.bs.modal', function () {
+        $('#conteudoBeneficiarios').load('@Url.Action("CarregarConteudoBeneficiarios", "Beneficiario")', function() {
+            setTimeout(function() {
+                if (window.beneficiarios.length > 0) {
+                    window.renderizarTabelaBeneficiarios();
+                }
+            }, 100);
+        });
+    });
+
+    $('#formCadastro').on('submit', function () {
+        $('#BeneficiariosJson').val(JSON.stringify(window.beneficiarios));
+    });
 </script>
     

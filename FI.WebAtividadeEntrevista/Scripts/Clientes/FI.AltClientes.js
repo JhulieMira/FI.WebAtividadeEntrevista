@@ -1,5 +1,8 @@
-﻿
-$(document).ready(function () {
+﻿$(document).ready(function () {
+    if (typeof window.beneficiarios === 'undefined') {
+        window.beneficiarios = [];
+    }
+
     if (obj) {
         $('#formCadastro #Nome').val(obj.Nome);
         $('#formCadastro #CEP').val(obj.CEP);
@@ -11,10 +14,12 @@ $(document).ready(function () {
         $('#formCadastro #Cidade').val(obj.Cidade);
         $('#formCadastro #Logradouro').val(obj.Logradouro);
         $('#formCadastro #Telefone').val(obj.Telefone);
+        $('#formCadastro #BeneficiariosJson').val(JSON.stringify(window.beneficiarios));
     }
 
     $('#formCadastro').submit(function (e) {
-        //e.preventDefault();
+        
+        $('#BeneficiariosJson').val(JSON.stringify(window.beneficiarios));
         
         $.ajax({
             url: urlPost,
@@ -29,7 +34,8 @@ $(document).ready(function () {
                 "Estado": $(this).find("#Estado").val(),
                 "Cidade": $(this).find("#Cidade").val(),
                 "Logradouro": $(this).find("#Logradouro").val(),
-                "Telefone": $(this).find("#Telefone").val()
+                "Telefone": $(this).find("#Telefone").val(),
+                "BeneficiariosJson": $(this).find("#BeneficiariosJson").val()
             },
             error:
             function (r) {

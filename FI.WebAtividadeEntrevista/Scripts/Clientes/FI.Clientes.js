@@ -1,22 +1,32 @@
-﻿
-$(document).ready(function () {
+﻿$(document).ready(function () {
+    if (typeof window.beneficiarios === 'undefined') {
+        window.beneficiarios = [];
+    }
+
     $('#formCadastro').submit(function (e) {
         e.preventDefault();
+        
+        $('#BeneficiariosJson').val(JSON.stringify(window.beneficiarios));
+            
+        const dataToSend = {
+            "Nome": $(this).find("#Nome").val(),
+            "CEP": $(this).find("#CEP").val(),
+            "Email": $(this).find("#Email").val(),
+            "Sobrenome": $(this).find("#Sobrenome").val(),
+            "Nacionalidade": $(this).find("#Nacionalidade").val(),
+            "CPF": $(this).find("#CPF").val(),
+            "Estado": $(this).find("#Estado").val(),
+            "Cidade": $(this).find("#Cidade").val(),
+            "Logradouro": $(this).find("#Logradouro").val(),
+            "Telefone": $(this).find("#Telefone").val(),
+            "BeneficiariosJson": $(this).find("#BeneficiariosJson").val()
+        };
+        
+ 
         $.ajax({
             url: urlPost,
             method: "POST",
-            data: {
-                "NOME": $(this).find("#Nome").val(),
-                "CEP": $(this).find("#CEP").val(),
-                "Email": $(this).find("#Email").val(),
-                "Sobrenome": $(this).find("#Sobrenome").val(),
-                "Nacionalidade": $(this).find("#Nacionalidade").val(),
-                "CPF": $(this).find("#CPF").val(),
-                "Estado": $(this).find("#Estado").val(),
-                "Cidade": $(this).find("#Cidade").val(),
-                "Logradouro": $(this).find("#Logradouro").val(),
-                "Telefone": $(this).find("#Telefone").val()
-            },
+            data: dataToSend,
             error:
             function (r) {
                 if (r.status == 400)

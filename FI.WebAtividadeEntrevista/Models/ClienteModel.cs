@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
+using FI.WebAtividadeEntrevista.Models;
 using FI.WebAtividadeEntrevista.Validations;
 
 namespace WebAtividadeEntrevista.Models
@@ -72,6 +73,7 @@ namespace WebAtividadeEntrevista.Models
         /// Telefone
         /// </summary>
         public string Telefone { get; set; }
+        public string BeneficiariosJson { get; set; }
 
-    }    
+    }
 }
