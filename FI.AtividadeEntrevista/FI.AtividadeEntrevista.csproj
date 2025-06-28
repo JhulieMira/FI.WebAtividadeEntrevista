@@ -48,9 +48,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BLL\BoBeneficiario.cs" />
     <Compile Include="BLL\BoCliente.cs" />
+    <Compile Include="DAL\Clientes\DaoBeneficiario.cs" />
     <Compile Include="DAL\Clientes\DaoCliente.cs" />
+    <Content Include="DAL\Clientes\Procedures\Beneficiario\FI_SP_AltBeneficiario.sql" />
+    <Content Include="DAL\Clientes\Procedures\Beneficiario\FI_SP_ConsBeneficiario.sql" />
+    <Content Include="DAL\Clientes\Procedures\Beneficiario\FI_SP_DelBeneficiario.sql" />
+    <Content Include="DAL\Clientes\Procedures\Beneficiario\FI_SP_IncBeneficiario.sql" />
+    <Content Include="DAL\Clientes\Procedures\Beneficiario\FI_SP_ConsBeneficiarioPorId.sql" />
+    <Content Include="DAL\Clientes\Procedures\Beneficiario\FI_SP_ConsBeneficiarioPorCPF.sql" />
     <Compile Include="DAL\Padrao\FI.AcessoDados.cs" />
+    <Compile Include="DML\Beneficiario.cs" />
     <Compile Include="DML\Cliente.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -64,6 +73,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
