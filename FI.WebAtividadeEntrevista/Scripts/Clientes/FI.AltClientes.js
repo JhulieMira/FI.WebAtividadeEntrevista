@@ -5,6 +5,7 @@ $(document).ready(function () {
         $('#formCadastro #CEP').val(obj.CEP);
         $('#formCadastro #Email').val(obj.Email);
         $('#formCadastro #Sobrenome').val(obj.Sobrenome);
+        $('#formCadastro #CPF').val(obj.CPF);
         $('#formCadastro #Nacionalidade').val(obj.Nacionalidade);
         $('#formCadastro #Estado').val(obj.Estado);
         $('#formCadastro #Cidade').val(obj.Cidade);
@@ -13,7 +14,7 @@ $(document).ready(function () {
     }
 
     $('#formCadastro').submit(function (e) {
-        e.preventDefault();
+        //e.preventDefault();
         
         $.ajax({
             url: urlPost,
@@ -23,6 +24,7 @@ $(document).ready(function () {
                 "CEP": $(this).find("#CEP").val(),
                 "Email": $(this).find("#Email").val(),
                 "Sobrenome": $(this).find("#Sobrenome").val(),
+                "CPF":$(this).find("#CPF").val(),
                 "Nacionalidade": $(this).find("#Nacionalidade").val(),
                 "Estado": $(this).find("#Estado").val(),
                 "Cidade": $(this).find("#Cidade").val(),

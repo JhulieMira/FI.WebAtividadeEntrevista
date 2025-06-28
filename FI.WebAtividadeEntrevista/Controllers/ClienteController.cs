@@ -27,7 +27,7 @@ namespace WebAtividadeEntrevista.Controllers
         {
             BoCliente bo = new BoCliente();
             
-            if (!this.ModelState.IsValid)
+            if (!this.ModelState.IsValid && bo.VerificarExistencia(model.CPF))
             {
                 List<string> erros = (from item in ModelState.Values
                                       from error in item.Errors

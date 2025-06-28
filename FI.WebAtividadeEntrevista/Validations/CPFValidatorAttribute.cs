@@ -7,7 +7,7 @@ namespace FI.WebAtividadeEntrevista.Validations
     {
         public override bool IsValid(object value)
         {
-            var cpf = value as string;
+             var cpf = value as string;
 
             if (string.IsNullOrWhiteSpace(cpf))
                 return false;
