@@ -74,15 +74,12 @@
         window.beneficiarios = [];
     }
 
-    // Variável para controlar se estamos editando um beneficiário
     if (typeof window.beneficiarioEmEdicao === 'undefined') {
         window.beneficiarioEmEdicao = null;
     }
 
-    // Flag para evitar validações duplicadas
     let validandoCPF = false;
 
-    // Função centralizada de validação de CPF
     function validarCPFBeneficiario(cpf, indexExcluir = -1) {
         if (validandoCPF) return false;
         validandoCPF = true;
