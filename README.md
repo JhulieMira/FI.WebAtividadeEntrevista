@@ -1,7 +1,7 @@
 # Sistema de Gerenciamento de Clientes e Beneficiários
 
 ## Descrição
-Sistema ASP.NET MVC para gerenciamento de clientes e seus beneficiários, com funcionalidades de máscaras automáticas para CPF, CEP e telefone.
+Sistema ASP.NET MVC para gerenciamento de clientes e seus beneficiários.
 
 ## Funcionalidades
 
