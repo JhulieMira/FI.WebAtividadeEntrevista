@@ -4,6 +4,7 @@
     }
 
     if (obj) {
+        $('#formCadastro #Id').val(obj.Id);
         $('#formCadastro #Nome').val(obj.Nome);
         $('#formCadastro #CEP').val(obj.CEP);
         $('#formCadastro #Email').val(obj.Email);
@@ -25,7 +26,8 @@
             url: urlPost,
             method: "POST",
             data: {
-                "NOME": $(this).find("#Nome").val(),
+                "Id": $(this).find("#Id").val(),
+                "Nome": $(this).find("#Nome").val(),
                 "CEP": $(this).find("#CEP").val(),
                 "Email": $(this).find("#Email").val(),
                 "Sobrenome": $(this).find("#Sobrenome").val(),

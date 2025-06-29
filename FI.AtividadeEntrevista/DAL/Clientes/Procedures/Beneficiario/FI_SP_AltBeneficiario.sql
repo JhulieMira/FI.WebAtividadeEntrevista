@@ -2,7 +2,7 @@
     @NOME          VARCHAR (255),
     @CPF           VARCHAR (11) ,
     @IDCLIENTE     BIGINT,
-    @Id            INT
+    @Id            BIGINT
 AS
 BEGIN
 	UPDATE BENEFICIARIOS 

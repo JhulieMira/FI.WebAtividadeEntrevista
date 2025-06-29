@@ -114,19 +114,24 @@ namespace WebAtividadeEntrevista.Controllers
                     Nacionalidade = model.Nacionalidade,
                     Nome = model.Nome,
                     Sobrenome = model.Sobrenome,
-                    Telefone = model.Telefone
+                    Telefone = model.Telefone,
+                    CPF = model.CPF
                 });
+
+                List<Beneficiario> beneficiariosList = new List<Beneficiario>();
 
                 foreach (var b in beneficiarios)
                 {
-                    BoBeneficiario boBeneficiario = new BoBeneficiario();
-                    b.ClienteId = model.Id;
-                    boBeneficiario.Incluir(new Beneficiario
+                    beneficiariosList.Add(new Beneficiario
                     {
                         CPF = b.CPF,
                         Nome = b.Nome,
                         IdCliente = b.ClienteId
                     });
+                    BoBeneficiario boBeneficiario = new BoBeneficiario();
+                    b.ClienteId = model.Id;
+
+                    boBeneficiario.AlterarOuCadastrarBeneficiario(beneficiariosList, b.ClienteId);
                 }
                                
                 return Json("Cadastro alterado com sucesso");
@@ -156,8 +161,6 @@ namespace WebAtividadeEntrevista.Controllers
                     Telefone = cliente.Telefone,
                     CPF = cliente.CPF
                 };
-
-            
             }
 
             return View(model);

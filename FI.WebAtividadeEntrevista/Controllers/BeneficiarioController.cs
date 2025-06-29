@@ -56,5 +56,38 @@ namespace FI.WebAtividadeEntrevista.Controllers
                 return Json("Cadastro efetuado com sucesso");
             }
         }
+
+        [HttpPost]
+        public JsonResult Excluir(long id)
+        {
+            BoBeneficiario bo = new BoBeneficiario();
+            var response = bo.ExcluirBeneficiario(id);
+           
+            return response ? Json("Beneficiário excluído com sucesso.") : Json("Erro ao excluir beneficiário.");
+        }
+
+        [HttpPost]
+        public JsonResult AlterarBeneficiario(BeneficiarioModel beneficiarioModel)
+        {
+            BoBeneficiario bo = new BoBeneficiario();
+            if (!this.ModelState.IsValid)
+            {
+                List<string> erros = (from item in ModelState.Values
+                                      from error in item.Errors
+                                      select error.ErrorMessage).ToList();
+                Response.StatusCode = 400;
+                return Json(string.Join(Environment.NewLine, erros));
+            }
+            var beneficiarios = new List<Beneficiario>();
+            beneficiarios.Add(new Beneficiario()
+            {
+                Id = beneficiarioModel.Id,
+                Nome = beneficiarioModel.Nome,
+                CPF = beneficiarioModel.CPF,
+                IdCliente = beneficiarioModel.ClienteId
+            });
+            var listaBeneficiariosRetorno = bo.AlterarOuCadastrarBeneficiario(beneficiarios, beneficiarioModel.ClienteId);
+            return Json(listaBeneficiariosRetorno);
+        }
     }
 }

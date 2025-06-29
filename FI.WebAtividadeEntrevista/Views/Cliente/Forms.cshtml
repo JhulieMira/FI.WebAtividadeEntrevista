@@ -98,6 +98,7 @@
     </div>
 
     <input type="hidden" id="BeneficiariosJson" name="BeneficiariosJson" />
+    <input type="hidden" id="Id" name="Id" />
 
 </form>
 
@@ -134,39 +135,89 @@
         window.beneficiarios.push({ CPF: cpf, Nome: nome });
     };
 
-    window.renderizarTabelaBeneficiarios = function() {
-        const tbody = $('#beneficiariosModal .modal-body table tbody');
-        tbody.empty();
-
-
-        window.beneficiarios.forEach((b, index) => {
-            const row = `
-                <tr>
-                    <td>${b.CPF}</td>
-                    <td>${b.Nome}</td>
-                    <td>
-                        <button type="button" class="btn btn-primary btn-sm btn-editar" data-index="${index}">Alterar</button>
-                        <button type="button" class="btn btn-danger btn-sm btn-excluir" data-index="${index}">Excluir</button>
-                    </td>
-                </tr>
-            `;
-            tbody.append(row);
-        });
+    // Função para limpar beneficiários em memória (sem ID)
+    window.limparBeneficiariosEmMemoria = function() {
+        window.beneficiarios = window.beneficiarios.filter(b => b.Id);
     };
-
 
     $('#beneficiariosModal').on('show.bs.modal', function () {
         $('#conteudoBeneficiarios').load('@Url.Action("CarregarConteudoBeneficiarios", "Beneficiario")', function() {
-            setTimeout(function() {
-                if (window.beneficiarios.length > 0) {
-                    window.renderizarTabelaBeneficiarios();
-                }
-            }, 100);
+            const clienteId = $('#Id').val();
+            if (clienteId) {
+                $.ajax({
+                    url: '@Url.Action("ListarBeneficiariosPorCliente", "Beneficiario")',
+                    method: "GET",
+                    data: { clienteId: clienteId },
+                    success: function(response) {
+                        if (response.Result === "OK" && response.Records) {
+                            // Preserva beneficiários em memória (sem ID)
+                            const beneficiariosEmMemoria = window.beneficiarios.filter(b => !b.Id);
+                            
+                            // Carrega beneficiários do servidor
+                            window.beneficiarios = [];
+                            response.Records.forEach(function(beneficiario) {
+                                window.beneficiarios.push({
+                                    Id: beneficiario.Id,
+                                    CPF: beneficiario.CPF,
+                                    Nome: beneficiario.Nome
+                                });
+                            });
+                            
+                            // Adiciona de volta os beneficiários em memória, evitando duplicatas
+                            beneficiariosEmMemoria.forEach(function(beneficiario) {
+                                // Verifica se já existe um beneficiário com o mesmo CPF
+                                const existeCPF = window.beneficiarios.some(b => b.CPF === beneficiario.CPF);
+                                if (!existeCPF) {
+                                    window.beneficiarios.push(beneficiario);
+                                }
+                            });
+                            
+                            window.renderizarTabelaBeneficiarios();
+                        }
+                    },
+                    error: function() {
+                        console.log('Erro ao carregar beneficiários');
+                        // Em caso de erro, pelo menos renderiza os beneficiários em memória
+                        setTimeout(function() {
+                            if (window.beneficiarios.length > 0) {
+                                window.renderizarTabelaBeneficiarios();
+                            }
+                        }, 100);
+                    }
+                });
+            } else {
+                setTimeout(function() {
+                    if (window.beneficiarios.length > 0) {
+                        window.renderizarTabelaBeneficiarios();
+                    }
+                }, 100);
+            }
         });
     });
 
     $('#formCadastro').on('submit', function () {
         $('#BeneficiariosJson').val(JSON.stringify(window.beneficiarios));
+    });
+
+    // Detecta quando o formulário é submetido com sucesso
+    $(document).ajaxSuccess(function(event, xhr, settings) {
+        if (settings.url && (settings.url.includes('/Cliente/Incluir') || settings.url.includes('/Cliente/Alterar'))) {
+            try {
+                const response = JSON.parse(xhr.responseText);
+                if (typeof response === 'string' && response.includes('sucesso')) {
+                    // Cliente salvo com sucesso, limpa beneficiários em memória
+                    window.limparBeneficiariosEmMemoria();
+                }
+            } catch (e) {
+                // Se não conseguir fazer parse, assume que foi sucesso
+                window.limparBeneficiariosEmMemoria();
+            }
+        }
+    });
+
+    // Limpa beneficiários em memória quando o formulário é submetido com sucesso
+    $(document).on('clienteSalvoComSucesso', function() {
+        window.limparBeneficiariosEmMemoria();
     });
 </script>
     

@@ -1,5 +1,33 @@
 ﻿@model dynamic
 
+<style>
+    .editable-cpf, .editable-nome {
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 3px;
+        transition: background-color 0.2s;
+    }
+    
+    .editable-cpf:hover, .editable-nome:hover {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+    
+    .input-edit-cpf, .input-edit-nome {
+        padding: 4px 8px;
+        border: 1px solid #007bff;
+        border-radius: 3px;
+    }
+    
+    tr.editing {
+        background-color: #fff3cd;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+</style>
+
 <form id="formCadastroBeneficiario" method="post">
     <div class="row">
         <div class="col-md-4">
@@ -17,10 +45,15 @@
         <div class="col-md-2">
             <div class="form-group">
                 <label class="invisible">Ação</label>
-                <button class="btn btn-sm btn-success btn-block">Incluir</button>
+                <button class="btn btn-sm btn-success btn-block" id="btnIncluir">Incluir</button>
             </div>
         </div>
-
+        <div class="col-md-2" id="divCancelar" style="display:none;">
+            <div class="form-group">
+                <label class="invisible">Cancelar</label>
+                <button type="button" class="btn btn-sm btn-secondary btn-block" id="btnCancelar">Cancelar</button>
+            </div>
+        </div>
     </div>
 </form>
 
@@ -41,6 +74,52 @@
         window.beneficiarios = [];
     }
 
+    // Variável para controlar se estamos editando um beneficiário
+    if (typeof window.beneficiarioEmEdicao === 'undefined') {
+        window.beneficiarioEmEdicao = null;
+    }
+
+    // Flag para evitar validações duplicadas
+    let validandoCPF = false;
+
+    // Função centralizada de validação de CPF
+    function validarCPFBeneficiario(cpf, indexExcluir = -1) {
+        if (validandoCPF) return false;
+        validandoCPF = true;
+        
+        try {
+            const cpfLimpo = cpf.replace(/\D/g, '');
+            
+            if (cpfLimpo.length !== 11) {
+                alert("CPF deve conter 11 dígitos.");
+                return false;
+            }
+            
+            const cpfCliente = window.parent ? window.parent.$('#CPF').val() : $('#CPF').val();
+            if (cpfCliente && cpfLimpo === cpfCliente.replace(/\D/g, '')) {
+                alert("O CPF do beneficiário não pode ser igual ao CPF do cliente.");
+                return false;
+            }
+            
+            const outroBeneficiario = window.beneficiarios.find((b, i) => i !== indexExcluir && b.CPF === cpf);
+            if (outroBeneficiario) {
+                alert("Já existe um beneficiário com esse CPF.");
+                return false;
+            }
+            
+            return true;
+        } finally {
+            validandoCPF = false;
+        }
+    }
+
+    function excluirBeneficiario(id) {
+        return $.ajax({
+            url: '/Beneficiario/Excluir',
+            method: "POST",
+            data: { id: id }
+        });
+    }
 
     $(document).on('submit', '#formCadastroBeneficiario', function (e) {
         e.preventDefault();
@@ -54,43 +133,269 @@
             return;
         }
 
+        if (!validarCPFBeneficiario(cpf)) {
+            return;
+        }
+
         if (cpfCliente && cpf.replace(/\D/g, '') === cpfCliente.replace(/\D/g, '')) {
             alert("O CPF do beneficiário não pode ser igual ao CPF do cliente.");
             return;
         }
 
-        if (window.beneficiarios.some(b => b.CPF === cpf)) {
-            alert("Já existe um beneficiário com esse CPF.");
-            return;
+        if (window.beneficiarioEmEdicao && window.beneficiarioEmEdicao.Id) {
+            $.ajax({
+                url: '/Beneficiario/AlterarBeneficiario',
+                method: "POST",
+                data: {
+                    Id: window.beneficiarioEmEdicao.Id,
+                    Nome: nome,
+                    CPF: cpf,
+                    ClienteId: window.parent ? window.parent.$('#Id').val() : $('#Id').val()
+                },
+                success: function(response) {
+                    console.log('Beneficiário atualizado com sucesso:', response);
+                    
+                    window.beneficiarioEmEdicao.Nome = nome;
+                    window.beneficiarioEmEdicao.CPF = cpf;
+                    
+                    window.beneficiarios.push(window.beneficiarioEmEdicao);
+                    
+                    const clienteId = window.parent ? window.parent.$('#Id').val() : $('#Id').val();
+                    if (clienteId) {
+                        $.ajax({
+                            url: '/Beneficiario/ListarBeneficiariosPorCliente',
+                            method: "GET",
+                            data: { clienteId: clienteId },
+                            success: function(response) {
+                                if (response.Result === "OK" && response.Records) {
+                                    window.beneficiarios = [];
+                                    response.Records.forEach(function(beneficiario) {
+                                        window.beneficiarios.push({
+                                            Id: beneficiario.Id,
+                                            CPF: beneficiario.CPF,
+                                            Nome: beneficiario.Nome
+                                        });
+                                    });
+                                    window.renderizarTabelaBeneficiarios();
+                                }
+                            },
+                            error: function() {
+                                window.renderizarTabelaBeneficiarios();
+                            }
+                        });
+                    } else {
+                        window.renderizarTabelaBeneficiarios();
+                    }
+                    
+                    $('#BeneficiarioNome').val('');
+                    $('#BeneficiarioCPF').val('');
+                    window.beneficiarioEmEdicao = null;
+                    atualizarInterfaceEdicao();
+                    $('#BeneficiarioNome').focus();
+                },
+                error: function(xhr, status, error) {
+                    console.log('Erro ao atualizar beneficiário:', xhr.status, error);
+                    alert("Erro ao atualizar beneficiário.");
+                }
+            });
+        } else {
+            window.adicionarBeneficiario(cpf, nome);
+            window.renderizarTabelaBeneficiarios();
+
+            $('#BeneficiarioNome').val('');
+            $('#BeneficiarioCPF').val('');
+            $('#BeneficiarioNome').focus();
         }
-
-        window.adicionarBeneficiario(cpf, nome);
-        
-        window.renderizarTabelaBeneficiarios();
-
-        $('#BeneficiarioNome').val('');
-        $('#BeneficiarioCPF').val('');
-        $('#BeneficiarioNome').focus();
     });
 
     $(document).on('click', '.btn-excluir', function () {
         const index = $(this).data('index');
-        window.beneficiarios.splice(index, 1);
-        window.renderizarTabelaBeneficiarios();
+        const beneficiario = window.beneficiarios[index];
+        
+        if (beneficiario.Id) {
+            
+            excluirBeneficiario(beneficiario.Id).then(function(response) {
+                window.beneficiarios.splice(index, 1);
+                window.renderizarTabelaBeneficiarios();
+            }).fail(function(xhr, status, error) {
+                console.log('Erro na exclusão:', xhr.status, error);
+                alert("Erro ao excluir beneficiário.");
+            });
+        } else {
+            window.beneficiarios.splice(index, 1);
+            window.renderizarTabelaBeneficiarios();
+        }
     });
 
     $(document).on('click', '.btn-editar', function () {
         const index = $(this).data('index');
         const b = window.beneficiarios[index];
 
+        window.beneficiarioEmEdicao = b;
+
         $('#BeneficiarioCPF').val(b.CPF);
         $('#BeneficiarioNome').val(b.Nome);
 
         window.beneficiarios.splice(index, 1);
         window.renderizarTabelaBeneficiarios();
+        
+        atualizarInterfaceEdicao();
+        $('#BeneficiarioNome').focus();
     });
+
+    window.renderizarTabelaBeneficiarios = function() {
+        const tbody = $('#beneficiariosModal .modal-body table tbody');
+        tbody.empty();
+
+        window.beneficiarios.forEach((b, index) => {
+            const row = `
+                <tr data-index="${index}">
+                    <td>
+                        <span class="editable-cpf" data-field="CPF" data-index="${index}">${b.CPF}</span>
+                        <input type="text" class="form-control input-edit-cpf" style="display:none;" value="${b.CPF}" maxlength="14">
+                    </td>
+                    <td>
+                        <span class="editable-nome" data-field="Nome" data-index="${index}">${b.Nome}</span>
+                        <input type="text" class="form-control input-edit-nome" style="display:none;" value="${b.Nome}" maxlength="50">
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-primary btn-sm btn-editar" data-index="${index}">Alterar</button>
+                        <button type="button" class="btn btn-danger btn-sm btn-excluir" data-index="${index}">Excluir</button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    };
+
+    function salvarAlteracoesBeneficiario(index, campo, valor) {
+        const beneficiario = window.beneficiarios[index];
+        const valorAnterior = beneficiario[campo];
+        
+        if (!valor || valor.trim() === '') {
+            alert(`O campo ${campo === 'CPF' ? 'CPF' : 'Nome'} não pode estar vazio.`);
+            return;
+        }
+        
+        if (campo === 'CPF') {
+            if (!validarCPFBeneficiario(valor, index)) {
+                return;
+            }
+        }
+        
+        beneficiario[campo] = valor;
+        
+        if (beneficiario.Id) {
+            $.ajax({
+                url: '/Beneficiario/AlterarBeneficiario',
+                method: "POST",
+                data: {
+                    Id: beneficiario.Id,
+                    Nome: beneficiario.Nome,
+                    CPF: beneficiario.CPF,
+                    ClienteId: window.parent ? window.parent.$('#Id').val() : $('#Id').val()
+                },
+                success: function(response) {
+                },
+                error: function(xhr, status, error) {
+                    beneficiario[campo] = valorAnterior;
+                    window.renderizarTabelaBeneficiarios();
+                    alert("Erro ao alterar beneficiário.");
+                }
+            });
+        }
+    }
+
+    $(document).on('click', '.editable-cpf, .editable-nome', function() {
+        const $span = $(this);
+        const $input = $span.siblings('input');
+        const $row = $span.closest('tr');
+        
+        $span.hide();
+        $input.show().focus().select();
+        
+        $row.addClass('editing');
+    });
+
+    $(document).on('blur', '.input-edit-cpf, .input-edit-nome', function() {
+        const $input = $(this);
+        const $span = $input.siblings('span');
+        const $row = $input.closest('tr');
+        const index = parseInt($row.data('index'));
+        const campo = $input.hasClass('input-edit-cpf') ? 'CPF' : 'Nome';
+        const valor = $input.val().trim();
+        
+        $input.hide();
+        $span.show();
+        $row.removeClass('editing');
+        
+        if (valor !== window.beneficiarios[index][campo]) {
+            salvarAlteracoesBeneficiario(index, campo, valor);
+            $span.text(valor);
+        }
+    });
+
+    $(document).on('keydown', '.input-edit-cpf, .input-edit-nome', function(e) {
+        if (e.key === 'Enter') {
+            $(this).blur();
+        } else if (e.key === 'Escape') {
+            const $input = $(this);
+            const $span = $input.siblings('span');
+            const $row = $input.closest('tr');
+            
+            $input.val($span.text());
+            $input.hide();
+            $span.show();
+            $row.removeClass('editing');
+        }
+    });
+
+    function cancelarEdicao() {
+        if (window.beneficiarioEmEdicao) {
+            window.beneficiarios.push(window.beneficiarioEmEdicao);
+            window.renderizarTabelaBeneficiarios();
+            
+            $('#BeneficiarioNome').val('');
+            $('#BeneficiarioCPF').val('');
+            window.beneficiarioEmEdicao = null;
+            
+            atualizarInterfaceEdicao();
+        }
+    }
+
+    $(document).on('keydown', '#BeneficiarioCPF, #BeneficiarioNome', function(e) {
+        if (e.key === 'Escape' && window.beneficiarioEmEdicao) {
+            cancelarEdicao();
+        }
+    });
+
+    $(document).on('click', function(e) {
+        if (window.beneficiarioEmEdicao && !$(e.target).closest('#formCadastroBeneficiario').length) {
+            cancelarEdicao();
+        }
+    });
+
+    $(document).on('click', '#btnCancelar', function() {
+        cancelarEdicao();
+    });
+
+    function atualizarInterfaceEdicao() {
+        if (window.beneficiarioEmEdicao) {
+            $('#btnIncluir').text('Atualizar');
+            $('#divCancelar').show();
+        } else {
+            $('#btnIncluir').text('Incluir');
+            $('#divCancelar').hide();
+        }
+    }
 
     if (window.beneficiarios.length > 0) {
         window.renderizarTabelaBeneficiarios();
     }
+
+    $(document).on('hidden.bs.modal', '#beneficiariosModal', function() {
+        if (window.beneficiarioEmEdicao) {
+            cancelarEdicao();
+        }
+    });
 </script>

@@ -10,16 +10,51 @@ namespace FI.AtividadeEntrevista.DAL.Clientes
 {
     internal class DaoBeneficiario : AcessoDados
     {
-        internal List<Beneficiario> ListarBeneficiariosPorCliente(int id)
+        internal bool ExcluirBeneficiario(long id)
+        {
+            List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>();
+            parametros.Add(new System.Data.SqlClient.SqlParameter("Id", id));
+            try
+            {
+                base.Executar("FI_SP_DelBeneficiario", parametros);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        internal Beneficiario AlterarBeneficiario(DML.Beneficiario beneficiario)
+        {
+            List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>();
+            parametros.Add(new System.Data.SqlClient.SqlParameter("Id", beneficiario.Id));
+            parametros.Add(new System.Data.SqlClient.SqlParameter("Nome", beneficiario.Nome));
+            parametros.Add(new System.Data.SqlClient.SqlParameter("CPF", beneficiario.CPF));
+            parametros.Add(new System.Data.SqlClient.SqlParameter("IdCliente", beneficiario.IdCliente));
+            DataSet ds = base.Consultar("FI_SP_AltBeneficiario", parametros);
+
+            return Converter(ds).FirstOrDefault();
+        }
+
+        internal List<Beneficiario> ListarBeneficiariosPorCliente(long id)
         {
             List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>();
 
             parametros.Add(new System.Data.SqlClient.SqlParameter("Id", id));
 
-            DataSet ds = base.Consultar("FI_SP_ConsCliente", parametros);
+            DataSet ds = base.Consultar("FI_SP_ConsBeneficiario", parametros);
             List<DML.Beneficiario> cli = Converter(ds);
 
             return cli;
+        }
+
+        public Beneficiario ObterBeneficiarioPorId(long id)
+        {
+            List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>();
+            parametros.Add(new System.Data.SqlClient.SqlParameter("Id", id));
+            DataSet ds = base.Consultar("FI_SP_ConsBeneficiarioPorId", parametros);
+            List<DML.Beneficiario> lista = Converter(ds);
+            return lista.FirstOrDefault();
         }
 
         private List<DML.Beneficiario> Converter(DataSet ds)
@@ -30,7 +65,7 @@ namespace FI.AtividadeEntrevista.DAL.Clientes
                 foreach (DataRow row in ds.Tables[0].Rows)
                 {
                     DML.Beneficiario cli = new DML.Beneficiario();
-                    cli.Id = row.Field<int>("Id");
+                    cli.Id = row.Field<long>("Id");
                     cli.CPF = row.Field<string>("CPF");
                     cli.Nome = row.Field<string>("Nome");
                     cli.IdCliente = row.Field<long>("IdCliente");
@@ -67,4 +102,5 @@ namespace FI.AtividadeEntrevista.DAL.Clientes
             return ds.Tables[0].Rows.Count > 0;
         }
     }
+   
 }
