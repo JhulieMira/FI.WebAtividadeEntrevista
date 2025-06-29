@@ -4,6 +4,27 @@
 
 $(document).ready(function() {
     
+    let camposAlterados = false;
+    
+    function verificarMudancas() {
+        if (!window.beneficiarioEmEdicao) {
+            camposAlterados = false;
+            return;
+        }
+        
+        const cpfAtual = $('#BeneficiarioCPF').val().trim();
+        const nomeAtual = $('#BeneficiarioNome').val().trim();
+        
+        camposAlterados = (cpfAtual !== window.beneficiarioEmEdicao.CPF || 
+                          nomeAtual !== window.beneficiarioEmEdicao.Nome);
+        
+        $('#btnIncluir').prop('disabled', !camposAlterados);
+    }
+    
+    $(document).on('input', '#BeneficiarioCPF, #BeneficiarioNome', function() {
+        verificarMudancas();
+    });
+    
     $(document).on('submit', '#formCadastroBeneficiario', function (e) {
         e.preventDefault();
 
@@ -31,6 +52,8 @@ $(document).ready(function() {
                 },
                 success: function(response) {
                     console.log('Beneficiário atualizado com sucesso:', response);
+                    
+                    alert("Beneficiário atualizado com sucesso!");
                     
                     window.beneficiarioEmEdicao.Nome = nome;
                     window.beneficiarioEmEdicao.CPF = cpf;
@@ -99,6 +122,8 @@ $(document).ready(function() {
                 window.adicionarBeneficiario(cpf, nome);
                 window.renderizarTabelaBeneficiarios();
 
+                alert("Beneficiário adicionado com sucesso!");
+
                 $('#BeneficiarioNome').val('');
                 $('#BeneficiarioCPF').val('');
                 $('#BeneficiarioNome').focus();
@@ -126,6 +151,10 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.btn-editar', function () {
+        if ($(this).prop('disabled')) {
+            return;
+        }
+        
         const index = $(this).data('index');
         const b = window.beneficiarios[index];
 
@@ -138,6 +167,7 @@ $(document).ready(function() {
         window.renderizarTabelaBeneficiarios();
         
         atualizarInterfaceEdicao();
+        setTimeout(verificarMudancas, 100);
         $('#BeneficiarioNome').focus();
     });
 
@@ -150,11 +180,22 @@ $(document).ready(function() {
         const $span = $(this);
         const $input = $span.siblings('input');
         const $row = $span.closest('tr');
+        const index = parseInt($row.data('index'));
         
         $span.hide();
         $input.show().focus().select();
         
         $row.addClass('editing');
+        
+        $row.find('.btn-editar').prop('disabled', false);
+    });
+
+    $(document).on('input', '.input-edit-cpf, .input-edit-nome', function() {
+        const $input = $(this);
+        const $row = $input.closest('tr');
+        const index = parseInt($row.data('index'));
+        
+        verificarMudancasInline(index);
     });
 
     $(document).on('blur', '.input-edit-cpf, .input-edit-nome', function() {
@@ -173,6 +214,8 @@ $(document).ready(function() {
             salvarAlteracoesBeneficiario(index, campo, valor);
             $span.text(valor);
         }
+        
+        $row.find('.btn-editar').prop('disabled', true);
     });
 
     $(document).on('keydown', '.input-edit-cpf, .input-edit-nome', function(e) {
@@ -187,6 +230,8 @@ $(document).ready(function() {
             $input.hide();
             $span.show();
             $row.removeClass('editing');
+            
+            $row.find('.btn-editar').prop('disabled', true);
         }
     });
 

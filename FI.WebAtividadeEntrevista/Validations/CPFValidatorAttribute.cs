@@ -10,7 +10,7 @@ namespace FI.WebAtividadeEntrevista.Validations
              var cpf = value as string;
 
             if (string.IsNullOrWhiteSpace(cpf))
-                return false;
+                return false;   
 
             cpf = cpf.Replace(".", "").Replace("-", "").Trim();
 

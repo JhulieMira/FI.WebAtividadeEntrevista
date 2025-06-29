@@ -37,7 +37,7 @@ window.renderizarTabelaBeneficiarios = function() {
                     <input type="text" class="form-control input-edit-nome" style="display:none;" value="${b.Nome}" maxlength="50">
                 </td>
                 <td>
-                    <button type="button" class="btn btn-primary btn-sm btn-editar" data-index="${index}">Alterar</button>
+                    <button type="button" class="btn btn-primary btn-sm btn-editar" data-index="${index}" disabled>Alterar</button>
                     <button type="button" class="btn btn-danger btn-sm btn-excluir" data-index="${index}">Excluir</button>
                 </td>
             </tr>
@@ -140,14 +140,32 @@ function cancelarEdicao() {
     }
 }
 
+// Função para verificar mudanças nos campos inline e habilitar/desabilitar botão Alterar
+function verificarMudancasInline(index) {
+    const beneficiario = window.beneficiarios[index];
+    const $row = $(`tr[data-index="${index}"]`);
+    const $btnAlterar = $row.find('.btn-editar');
+    
+    const cpfAtual = $row.find('.input-edit-cpf').val().trim();
+    const nomeAtual = $row.find('.input-edit-nome').val().trim();
+    
+    const cpfOriginal = beneficiario.CPF;
+    const nomeOriginal = beneficiario.Nome;
+    
+    const houveMudanca = (cpfAtual !== cpfOriginal || nomeAtual !== nomeOriginal);
+    
+    $btnAlterar.prop('disabled', !houveMudanca);
+}
 
 function atualizarInterfaceEdicao() {
     if (window.beneficiarioEmEdicao) {
         $('#btnIncluir').text('Atualizar');
         $('#divCancelar').show();
+        $('#btnIncluir').prop('disabled', true);
     } else {
         $('#btnIncluir').text('Incluir');
         $('#divCancelar').hide();
+        $('#btnIncluir').prop('disabled', false);
     }
 }
 
@@ -176,6 +194,8 @@ window.cadastrarBeneficiarioNoBackend = function(nome, cpf, clienteId) {
             console.log('Beneficiário cadastrado com sucesso:', response);
             
             if (typeof response === 'string' && response.includes('sucesso')) {
+                alert("Beneficiário cadastrado com sucesso!");
+                
                 $.ajax({
                     url: '/Beneficiario/ListarBeneficiariosPorCliente',
                     method: "GET",

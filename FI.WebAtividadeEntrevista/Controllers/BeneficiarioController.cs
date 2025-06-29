@@ -80,7 +80,7 @@ namespace FI.WebAtividadeEntrevista.Controllers
             return response ? Json("Beneficiário excluído com sucesso.") : Json("Erro ao excluir beneficiário.");
         }
 
-        [HttpPut]
+        [HttpPost]
         public JsonResult AlterarBeneficiario(BeneficiarioModel beneficiarioModel)
         {
             BoBeneficiario bo = new BoBeneficiario();
