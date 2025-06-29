@@ -10,6 +10,79 @@ if (typeof window.beneficiarioEmEdicao === 'undefined') {
 
 let validandoCPF = false;
 
+// FUNÇÃO GLOBAL PARA CONFIGURAR MÁSCARAS
+window.configurarMascarasBeneficiarios = function() {
+    function aplicarMascaraCPF(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length <= 11) {
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        }
+        input.value = value;
+    }
+    
+    function formatarCPF(valor) {
+        if (!valor) return '';
+        let value = valor.replace(/\D/g, '');
+        if (value.length === 11) {
+            return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+        return valor;
+    }
+    
+    var cpfField = document.getElementById('BeneficiarioCPF');
+    if (cpfField) {
+        if (cpfField.value) {
+            cpfField.value = formatarCPF(cpfField.value);
+        }
+        
+        if (cpfField._mascaraHandler) {
+            cpfField.removeEventListener('input', cpfField._mascaraHandler);
+        }
+        
+        cpfField._mascaraHandler = function() {
+            aplicarMascaraCPF(this);
+        };
+        
+        cpfField.addEventListener('input', cpfField._mascaraHandler);
+    }
+    
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('input-edit-cpf')) {
+            aplicarMascaraCPF(e.target);
+        }
+    });
+    
+    var form = document.getElementById('formCadastroBeneficiario');
+    if (form) {
+        if (form._submitHandler) {
+            form.removeEventListener('submit', form._submitHandler);
+        }
+        
+        form._submitHandler = function() {
+            var cpfField = document.getElementById('BeneficiarioCPF');
+            if (cpfField) {
+                var cpfValue = cpfField.value.replace(/[^\d]/g, '');
+                
+                var hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = 'BeneficiarioCPF';
+                hiddenField.value = cpfValue;
+                form.appendChild(hiddenField);
+                
+                cpfField.disabled = true;
+            }
+        };
+        
+        form.addEventListener('submit', form._submitHandler);
+    }
+};
+
+// Verificar se a função foi definida corretamente
+console.log('Script beneficiarios.js carregado');
+console.log('Função configurarMascarasBeneficiarios definida:', typeof window.configurarMascarasBeneficiarios);
+
 // FUNÇÕES GLOBAIS
 window.adicionarBeneficiario = function(cpf, nome) {
     window.beneficiarios.push({ CPF: cpf, Nome: nome });
@@ -25,12 +98,22 @@ window.renderizarTabelaBeneficiarios = function() {
     const tbody = $('#beneficiariosModal .modal-body table tbody');
     tbody.empty();
 
+    function aplicarMascaraCPF(cpf) {
+        if (!cpf) return '';
+        const cpfLimpo = cpf.replace(/\D/g, '');
+        if (cpfLimpo.length === 11) {
+            return cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+        }
+        return cpf;
+    }
+
     window.beneficiarios.forEach((b, index) => {
+        const cpfFormatado = aplicarMascaraCPF(b.CPF);
         const row = `
             <tr data-index="${index}">
                 <td>
-                    <span class="editable-cpf" data-field="CPF" data-index="${index}">${b.CPF}</span>
-                    <input type="text" class="form-control input-edit-cpf" style="display:none;" value="${b.CPF}" maxlength="14">
+                    <span class="editable-cpf" data-field="CPF" data-index="${index}">${cpfFormatado}</span>
+                    <input type="text" class="form-control input-edit-cpf" style="display:none;" value="${cpfFormatado}" maxlength="14">
                 </td>
                 <td>
                     <span class="editable-nome" data-field="Nome" data-index="${index}">${b.Nome}</span>
@@ -65,7 +148,12 @@ function validarCPFBeneficiario(cpf, indexExcluir = -1) {
             return false;
         }
         
-        const outroBeneficiario = window.beneficiarios.find((b, i) => i !== indexExcluir && b.CPF === cpf);
+        const outroBeneficiario = window.beneficiarios.find((b, i) => {
+            if (i === indexExcluir) return false;
+            const bCpfLimpo = b.CPF.replace(/\D/g, '');
+            return bCpfLimpo === cpfLimpo;
+        });
+        
         if (outroBeneficiario) {
             alert("Já existe um beneficiário com esse CPF na lista atual.");
             return false;
@@ -100,41 +188,46 @@ function salvarAlteracoesBeneficiario(index, campo, valor) {
         if (!validarCPFBeneficiario(valor, index)) {
             return;
         }
+        beneficiario[campo] = valor.replace(/\D/g, '');
+    } else {
+        beneficiario[campo] = valor.trim();
     }
-    
-    beneficiario[campo] = valor;
     
     if (beneficiario.Id) {
         $.ajax({
-            url: '/Beneficiario/AlterarBeneficiario',
+            url: '/Beneficiario/Alterar',
             method: "POST",
             data: {
-                Id: beneficiario.Id,
-                Nome: beneficiario.Nome,
-                CPF: beneficiario.CPF,
-                ClienteId: window.parent ? window.parent.$('#Id').val() : $('#Id').val()
+                id: beneficiario.Id,
+                cpf: campo === 'CPF' ? beneficiario[campo] : beneficiario.CPF,
+                nome: campo === 'Nome' ? beneficiario[campo] : beneficiario.Nome
             },
-            success: function(response) {
-            },
-            error: function(xhr, status, error) {
+            error: function(r) {
                 beneficiario[campo] = valorAnterior;
+                alert("Erro ao salvar alterações.");
+            },
+            success: function(r) {
                 window.renderizarTabelaBeneficiarios();
-                alert("Erro ao alterar beneficiário.");
             }
         });
+    } else {
+        window.renderizarTabelaBeneficiarios();
     }
 }
 
 
 // FUNÇÕES DE INTERFACE
 function cancelarEdicao() {
-    if (window.beneficiarioEmEdicao) {
-        window.beneficiarios.push(window.beneficiarioEmEdicao);
-        window.renderizarTabelaBeneficiarios();
+    if (window.beneficiarioEmEdicao !== null) {
+        const row = $(`tr[data-index="${window.beneficiarioEmEdicao}"]`);
+        const span = row.find(`.editable-${window.campoEmEdicao}`);
+        const input = row.find(`.input-edit-${window.campoEmEdicao}`);
         
-        $('#BeneficiarioNome').val('');
-        $('#BeneficiarioCPF').val('');
+        input.hide();
+        span.show();
+        
         window.beneficiarioEmEdicao = null;
+        window.campoEmEdicao = null;
         
         atualizarInterfaceEdicao();
     }
@@ -142,31 +235,24 @@ function cancelarEdicao() {
 
 // Função para verificar mudanças nos campos inline e habilitar/desabilitar botão Alterar
 function verificarMudancasInline(index) {
-    const beneficiario = window.beneficiarios[index];
-    const $row = $(`tr[data-index="${index}"]`);
-    const $btnAlterar = $row.find('.btn-editar');
+    const row = $(`tr[data-index="${index}"]`);
+    const cpfSpan = row.find('.editable-cpf');
+    const cpfInput = row.find('.input-edit-cpf');
+    const nomeSpan = row.find('.editable-nome');
+    const nomeInput = row.find('.input-edit-nome');
     
-    const cpfAtual = $row.find('.input-edit-cpf').val().trim();
-    const nomeAtual = $row.find('.input-edit-nome').val().trim();
+    const cpfMudou = cpfSpan.text() !== cpfInput.val();
+    const nomeMudou = nomeSpan.text() !== nomeInput.val();
     
-    const cpfOriginal = beneficiario.CPF;
-    const nomeOriginal = beneficiario.Nome;
-    
-    const houveMudanca = (cpfAtual !== cpfOriginal || nomeAtual !== nomeOriginal);
-    
-    $btnAlterar.prop('disabled', !houveMudanca);
+    const btnEditar = row.find('.btn-editar');
+    btnEditar.prop('disabled', !(cpfMudou || nomeMudou));
 }
 
 function atualizarInterfaceEdicao() {
-    if (window.beneficiarioEmEdicao) {
-        $('#btnIncluir').text('Atualizar');
-        $('#divCancelar').show();
-        $('#btnIncluir').prop('disabled', true);
-    } else {
-        $('#btnIncluir').text('Incluir');
-        $('#divCancelar').hide();
-        $('#btnIncluir').prop('disabled', false);
-    }
+    $('.btn-editar').each(function() {
+        const index = $(this).data('index');
+        verificarMudancasInline(index);
+    });
 }
 
 window.verificarCPFExistente = function(cpf, clienteId) {
@@ -214,7 +300,11 @@ window.cadastrarBeneficiarioNoBackend = function(nome, cpf, clienteId) {
                             });
                             
                             beneficiariosEmMemoria.forEach(function(beneficiario) {
-                                const existeCPF = window.beneficiarios.some(b => b.CPF === beneficiario.CPF);
+                                const existeCPF = window.beneficiarios.some(b => {
+                                    const bCpfLimpo = b.CPF.replace(/\D/g, '');
+                                    const beneficiarioCpfLimpo = beneficiario.CPF.replace(/\D/g, '');
+                                    return bCpfLimpo === beneficiarioCpfLimpo;
+                                });
                                 if (!existeCPF) {
                                     window.beneficiarios.push(beneficiario);
                                 }

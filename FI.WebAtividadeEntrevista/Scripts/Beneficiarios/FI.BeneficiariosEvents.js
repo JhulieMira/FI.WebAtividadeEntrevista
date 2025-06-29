@@ -15,7 +15,10 @@ $(document).ready(function() {
         const cpfAtual = $('#BeneficiarioCPF').val().trim();
         const nomeAtual = $('#BeneficiarioNome').val().trim();
         
-        camposAlterados = (cpfAtual !== window.beneficiarioEmEdicao.CPF || 
+        const cpfAtualLimpo = cpfAtual.replace(/\D/g, '');
+        const cpfOriginalLimpo = window.beneficiarioEmEdicao.CPF.replace(/\D/g, '');
+        
+        camposAlterados = (cpfAtualLimpo !== cpfOriginalLimpo || 
                           nomeAtual !== window.beneficiarioEmEdicao.Nome);
         
         $('#btnIncluir').prop('disabled', !camposAlterados);
@@ -40,6 +43,9 @@ $(document).ready(function() {
             return;
         }
 
+        // Remover formatação do CPF antes de enviar
+        const cpfLimpo = cpf.replace(/\D/g, '');
+
         if (window.beneficiarioEmEdicao && window.beneficiarioEmEdicao.Id) {
             $.ajax({
                 url: '/Beneficiario/AlterarBeneficiario',
@@ -47,7 +53,7 @@ $(document).ready(function() {
                 data: {
                     Id: window.beneficiarioEmEdicao.Id,
                     Nome: nome,
-                    CPF: cpf,
+                    CPF: cpfLimpo,
                     ClienteId: window.parent ? window.parent.$('#Id').val() : $('#Id').val()
                 },
                 success: function(response) {
@@ -56,7 +62,7 @@ $(document).ready(function() {
                     alert("Beneficiário atualizado com sucesso!");
                     
                     window.beneficiarioEmEdicao.Nome = nome;
-                    window.beneficiarioEmEdicao.CPF = cpf;
+                    window.beneficiarioEmEdicao.CPF = cpfLimpo;
                     
                     window.beneficiarios.push(window.beneficiarioEmEdicao);
                     
@@ -105,21 +111,21 @@ $(document).ready(function() {
                 $.ajax({
                     url: '/Beneficiario/VerificarCPF',
                     method: "GET",
-                    data: { cpf: cpf, clienteId: clienteId },
+                    data: { cpf: cpfLimpo, clienteId: clienteId },
                     success: function(response) {
                         if (response.Existe) {
                             alert("Já existe um beneficiário cadastrado com esse CPF para este cliente.");
                             return;
                         }
                         
-                        cadastrarBeneficiarioNoBackend(nome, cpf, clienteId);
+                        cadastrarBeneficiarioNoBackend(nome, cpfLimpo, clienteId);
                     },
                     error: function() {
-                        cadastrarBeneficiarioNoBackend(nome, cpf, clienteId);
+                        cadastrarBeneficiarioNoBackend(nome, cpfLimpo, clienteId);
                     }
                 });
             } else {
-                window.adicionarBeneficiario(cpf, nome);
+                window.adicionarBeneficiario(cpfLimpo, nome);
                 window.renderizarTabelaBeneficiarios();
 
                 alert("Beneficiário adicionado com sucesso!");
@@ -160,7 +166,17 @@ $(document).ready(function() {
 
         window.beneficiarioEmEdicao = b;
 
-        $('#BeneficiarioCPF').val(b.CPF);
+        // Aplicar máscara de CPF ao preencher o campo
+        function aplicarMascaraCPF(cpf) {
+            if (!cpf) return '';
+            const cpfLimpo = cpf.replace(/\D/g, '');
+            if (cpfLimpo.length === 11) {
+                return cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            }
+            return cpf;
+        }
+
+        $('#BeneficiarioCPF').val(aplicarMascaraCPF(b.CPF));
         $('#BeneficiarioNome').val(b.Nome);
 
         window.beneficiarios.splice(index, 1);

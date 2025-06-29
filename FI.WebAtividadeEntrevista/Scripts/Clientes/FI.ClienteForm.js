@@ -6,6 +6,20 @@ $(document).ready(function() {
     // EVENTOS DO MODAL DE BENEFICIÁRIOS
     $('#beneficiariosModal').on('show.bs.modal', function () {
         $('#conteudoBeneficiarios').load('/Beneficiario/CarregarConteudoBeneficiarios', function() {
+            console.log('Partial view de beneficiários carregada');
+            console.log('Função configurarMascarasBeneficiarios existe:', typeof window.configurarMascarasBeneficiarios);
+            
+            // Configurar máscaras após o carregamento
+            setTimeout(function() {
+                console.log('Tentando configurar máscaras...');
+                if (typeof window.configurarMascarasBeneficiarios === 'function') {
+                    console.log('Chamando configurarMascarasBeneficiarios...');
+                    window.configurarMascarasBeneficiarios();
+                } else {
+                    console.error('Função configurarMascarasBeneficiarios não encontrada!');
+                }
+            }, 100);
+            
             const clienteId = $('#Id').val();
             if (clienteId) {
                 $.ajax({
@@ -26,7 +40,11 @@ $(document).ready(function() {
                             });
                             
                             beneficiariosEmMemoria.forEach(function(beneficiario) {
-                                const existeCPF = window.beneficiarios.some(b => b.CPF === beneficiario.CPF);
+                                const existeCPF = window.beneficiarios.some(b => {
+                                    const bCpfLimpo = b.CPF.replace(/\D/g, '');
+                                    const beneficiarioCpfLimpo = beneficiario.CPF.replace(/\D/g, '');
+                                    return bCpfLimpo === beneficiarioCpfLimpo;
+                                });
                                 if (!existeCPF) {
                                     window.beneficiarios.push(beneficiario);
                                 }

@@ -127,88 +127,119 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-<script src="~/Scripts/beneficiarios.js"></script>
-<script src="~/Scripts/beneficiarios-events.js"></script>
-<script src="~/Scripts/cliente-form.js"></script>
+<script src="~/Scripts/Clientes/FI.ClienteForm.js"></script>
 
 <script>
-$(document).ready(function() {
-    // Função para aplicar máscara de CPF
-    function aplicarMascaraCPF(input) {
-        let value = input.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+if (typeof window.Mascaras !== 'undefined') {
+    window.Mascaras.configurar();
+    window.Mascaras.aplicarDinamicas();
+} else {
+    function configurarMascarasFallback() {
+        function aplicarMascaraCPF(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            }
+            input.value = value;
         }
-        input.value = value;
-    }
-    
-    // Função para aplicar máscara de CEP
-    function aplicarMascaraCEP(input) {
-        let value = input.value.replace(/\D/g, '');
-        if (value.length <= 8) {
-            value = value.replace(/(\d{5})(\d)/, '$1-$2');
-        }
-        input.value = value;
-    }
-    
-    // Função para aplicar máscara de telefone
-    function aplicarMascaraTelefone(input) {
-        let value = input.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            value = value.replace(/(\d{2})(\d)/, '($1) $2');
-            if (value.length > 10) {
+        
+        function aplicarMascaraCEP(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length <= 8) {
                 value = value.replace(/(\d{5})(\d)/, '$1-$2');
             }
+            input.value = value;
         }
-        input.value = value;
+        
+        function aplicarMascaraTelefone(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                if (value.length > 10) {
+                    value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                }
+            }
+            input.value = value;
+        }
+        
+        function formatarCPF(valor) {
+            if (!valor) return '';
+            let value = valor.replace(/\D/g, '');
+            if (value.length === 11) {
+                return value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            }
+            return valor;
+        }
+        
+        function formatarCEP(valor) {
+            if (!valor) return '';
+            let value = valor.replace(/\D/g, '');
+            if (value.length === 8) {
+                return value.replace(/(\d{5})(\d{3})/, '$1-$2');
+            }
+            return valor;
+        }
+        
+        function formatarTelefone(valor) {
+            if (!valor) return '';
+            let value = valor.replace(/\D/g, '');
+            if (value.length === 11) {
+                return value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (value.length === 10) {
+                return value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+            }
+            return valor;
+        }
+        
+        var cpfField = document.getElementById('CPF');
+        if (cpfField) {
+            if (cpfField.value) {
+                cpfField.value = formatarCPF(cpfField.value);
+            }
+            
+            cpfField.addEventListener('input', function() {
+                aplicarMascaraCPF(this);
+            });
+        }
+        
+        var cepField = document.getElementById('CEP');
+        if (cepField) {
+            if (cepField.value) {
+                cepField.value = formatarCEP(cepField.value);
+            }
+            
+            cepField.addEventListener('input', function() {
+                aplicarMascaraCEP(this);
+            });
+        }
+        
+        var telefoneField = document.getElementById('Telefone');
+        if (telefoneField) {
+            if (telefoneField.value) {
+                telefoneField.value = formatarTelefone(telefoneField.value);
+            }
+            
+            telefoneField.addEventListener('input', function() {
+                aplicarMascaraTelefone(this);
+            });
+        }
     }
     
-    // Aplicar máscaras aos campos
-    $('#CPF').on('input', function() {
-        aplicarMascaraCPF(this);
-    });
+    if (typeof $ !== 'undefined') {
+        $(document).ready(configurarMascarasFallback);
+    } else {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', configurarMascarasFallback);
+        } else {
+            configurarMascarasFallback();
+        }
+    }
     
-    $('#CEP').on('input', function() {
-        aplicarMascaraCEP(this);
-    });
-    
-    $('#Telefone').on('input', function() {
-        aplicarMascaraTelefone(this);
-    });
-    
-    // Remover máscaras antes do envio do formulário para manter dados limpos
-    $('#formCadastro').on('submit', function() {
-        // Remover máscaras dos campos antes do envio
-        var cpfValue = $('#CPF').val().replace(/[^\d]/g, '');
-        var cepValue = $('#CEP').val().replace(/[^\d]/g, '');
-        var telefoneValue = $('#Telefone').val().replace(/[^\d]/g, '');
-        
-        // Criar campos temporários com valores limpos
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'CPF',
-            value: cpfValue
-        }).appendTo('#formCadastro');
-        
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'CEP',
-            value: cepValue
-        }).appendTo('#formCadastro');
-        
-        $('<input>').attr({
-            type: 'hidden',
-            name: 'Telefone',
-            value: telefoneValue
-        }).appendTo('#formCadastro');
-        
-        // Desabilitar os campos originais para não enviar valores com máscara
-        $('#CPF').prop('disabled', true);
-        $('#CEP').prop('disabled', true);
-        $('#Telefone').prop('disabled', true);
-    });
-});
+    setTimeout(configurarMascarasFallback, 500);
+}
 </script>
+
+
     
