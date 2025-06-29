@@ -19,6 +19,18 @@ namespace FI.WebAtividadeEntrevista.Controllers
 
             return Json(new { Result = "OK", Records = beneficiarios }, JsonRequestBehavior.AllowGet);
         }
+
+        [HttpGet]
+        public JsonResult VerificarCPF(string cpf, long clienteId)
+        {
+            BoBeneficiario bo = new BoBeneficiario();
+            
+            List<Beneficiario> beneficiarios = bo.ListarBeneficiariosPorCliente(clienteId);
+            bool existeParaCliente = beneficiarios.Any(b => b.CPF == cpf);
+            
+            return Json(new { Existe = existeParaCliente }, JsonRequestBehavior.AllowGet);
+        }
+
         public ActionResult CarregarConteudoBeneficiarios()
         {
             return PartialView("_ConteudoBeneficiarios");
@@ -38,9 +50,11 @@ namespace FI.WebAtividadeEntrevista.Controllers
                 Response.StatusCode = 400;
                 return Json(string.Join(Environment.NewLine, erros));
             }
-            if (bo.VerificarExistencia(model.CPF))
+            
+            List<Beneficiario> beneficiariosExistentes = bo.ListarBeneficiariosPorCliente(model.ClienteId);
+            if (beneficiariosExistentes.Any(b => b.CPF == model.CPF))
             {
-                return Json(string.Join(Environment.NewLine, "Já existe um usuário cadastrado com esse CPF."));
+                return Json(string.Join(Environment.NewLine, "Já existe um beneficiário cadastrado com esse CPF para este cliente."));
             }
             else
             {
@@ -66,7 +80,7 @@ namespace FI.WebAtividadeEntrevista.Controllers
             return response ? Json("Beneficiário excluído com sucesso.") : Json("Erro ao excluir beneficiário.");
         }
 
-        [HttpPost]
+        [HttpPut]
         public JsonResult AlterarBeneficiario(BeneficiarioModel beneficiarioModel)
         {
             BoBeneficiario bo = new BoBeneficiario();

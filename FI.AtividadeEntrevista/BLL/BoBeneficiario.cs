@@ -6,7 +6,7 @@ namespace FI.AtividadeEntrevista.BLL
 {
     public class BoBeneficiario
     {
-        public List<DML.Beneficiario> ListarBeneficiariosPorCliente(int clienteId)
+        public List<DML.Beneficiario> ListarBeneficiariosPorCliente(long clienteId)
         {
             FI.AtividadeEntrevista.DAL.Clientes.DaoBeneficiario cli = new FI.AtividadeEntrevista.DAL.Clientes.DaoBeneficiario();
             return cli.ListarBeneficiariosPorCliente(clienteId);

@@ -1,0 +1,60 @@
+/* ========================================
+   ESTILOS DO MODAL DE BENEFICIÁRIOS
+   ======================================== */
+
+.editable-cpf, .editable-nome {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.editable-cpf:hover, .editable-nome:hover {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.input-edit-cpf, .input-edit-nome {
+    padding: 4px 8px;
+    border: 1px solid #007bff;
+    border-radius: 3px;
+}
+
+tr.editing {
+    background-color: #fff3cd;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-editar, .btn-excluir {
+    margin-right: 5px;
+}
+
+.btn-editar:last-child, .btn-excluir:last-child {
+    margin-right: 0;
+}
+
+#formCadastroBeneficiario {
+    margin-bottom: 20px;
+}
+
+#formCadastroBeneficiario .form-group {
+    margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .table-responsive {
+        font-size: 14px;
+    }
+    
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+} 
